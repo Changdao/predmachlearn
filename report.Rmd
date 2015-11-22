@@ -1,0 +1,53 @@
+---
+title: "Using GLM to analyze the wearable"
+author: "James Liu"
+date: "2015年11月22日"
+output: html_document
+--
+
+#Abstract
+This report utilize algorithm learned from the Practical Machine Learning to analyze the data collected from body wearable. 
+##Load and clean data
+The data is from http://groupware.les.inf.puc-rio.br/har.
+
+
+```{r cache=TRUE}
+library(caret)
+pml <- read.csv('pml-training.csv',header = TRUE)
+pmlTest <- read.csv('pml-testing.csv',header=TRUE)
+```
+According to the summary of the data, there are too much  NA. Cast off those columns containing many NA observation and choose variables as predictor.
+
+```{r cache=TRUE}
+pmlT<-subset(pml,select=c(roll_belt, pitch_belt, yaw_belt, total_accel_belt,gyros_belt_x, gyros_belt_y ,gyros_belt_z, accel_belt_x, accel_belt_y, accel_belt_z,magnet_belt_x, magnet_belt_y ,magnet_belt_z, roll_arm, pitch_arm, yaw_arm, total_accel_arm,gyros_arm_x, gyros_arm_y, gyros_arm_z, accel_arm_x, accel_arm_y, accel_arm_z,magnet_arm_x, magnet_arm_y, magnet_arm_z,roll_dumbbell ,pitch_dumbbell, yaw_dumbbell,total_accel_dumbbell,gyros_dumbbell_x ,gyros_dumbbell_y, gyros_dumbbell_z, accel_dumbbell_x,accel_dumbbell_y ,accel_dumbbell_z, magnet_dumbbell_x, magnet_dumbbell_y, magnet_dumbbell_z,roll_forearm ,pitch_forearm, yaw_forearm,gyros_forearm_x, gyros_forearm_y, gyros_forearm_z, accel_forearm_x, accel_forearm_y,accel_forearm_z, magnet_forearm_x, magnet_forearm_y, magnet_forearm_z,classe ))
+inTrain<-createDataPartition(y=pmlT$classe,p=0.7,list=FALSE)
+pmlTR<-pmlT[inTrain,]
+pmlTE<-pmlT[-inTrain,]
+```
+We do the feature plot here:
+
+```{r cahce=TRUE}
+featurePlot(x=pmlTR[,c("roll_belt","pitch_forearm","magnet_dumbbell_y","classe")], y=pmlTR$classe,plot="pairs")
+```
+
+##Train and validation
+First, I utilize the Decision Tree to do machine learning. 
+```{r cache=TRUE}
+modelFit<-train(classe~.,method='rpart',data=pmlTR)
+modelFit$finalModel
+```
+After cross-validation, the out of sample error is very high and the accuracy is too bad.
+```{r cache=TRUE}
+confusionMatrix(pmlTE$classe,predict(modelFit,pmlTE))
+```
+
+Then, I choose the boosting algorithm to build the model.
+```{r cache=TRUE}
+mdlgbm<-train(classe~.,method='gbm',data=pmlTR,verbose=FALSE)
+confusionMatrix(pmlTE$classe,predict(mdlgbm,pmlTE))
+```
+
+The latter is much better.
+
+
+
