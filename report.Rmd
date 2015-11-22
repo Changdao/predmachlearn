@@ -1,17 +1,16 @@
 ---
-title: "Using GLM to analyze the wearable"
+title: "Analyze the sports data by Machine Learning"
 author: "James Liu"
-date: "2015年11月22日"
+date: "2015年11月23日"
 output: html_document
---
+---
 
 #Abstract
-This report utilize algorithm learned from the Practical Machine Learning to analyze the data collected from body wearable. 
+This report utilize machine learning algorithm from the Practical Machine Learning to analyze the sports data collected from weight lifts. 
 ##Load and clean data
-The data is from http://groupware.les.inf.puc-rio.br/har.
+The data is from http://groupware.les.inf.puc-rio.br/har, first the analyer download data from website then load it.
 
-
-```{r cache=TRUE}
+```{r cache=TRUE,echo=FALSE}
 library(caret)
 pml <- read.csv('pml-training.csv',header = TRUE)
 pmlTest <- read.csv('pml-testing.csv',header=TRUE)
@@ -26,13 +25,14 @@ pmlTE<-pmlT[-inTrain,]
 ```
 We do the feature plot here:
 
-```{r cahce=TRUE}
+```{r cahce=TRUE,echo=FALSE}
+library(caret)
 featurePlot(x=pmlTR[,c("roll_belt","pitch_forearm","magnet_dumbbell_y","classe")], y=pmlTR$classe,plot="pairs")
 ```
 
 ##Train and validation
 First, I utilize the Decision Tree to do machine learning. 
-```{r cache=TRUE}
+```{r cache=TRUE,echo=FALSE}
 modelFit<-train(classe~.,method='rpart',data=pmlTR)
 modelFit$finalModel
 ```
@@ -42,12 +42,15 @@ confusionMatrix(pmlTE$classe,predict(modelFit,pmlTE))
 ```
 
 Then, I choose the boosting algorithm to build the model.
-```{r cache=TRUE}
+```{r cache=TRUE,echo=FALSE}
 mdlgbm<-train(classe~.,method='gbm',data=pmlTR,verbose=FALSE)
 confusionMatrix(pmlTE$classe,predict(mdlgbm,pmlTE))
 ```
 
 The latter is much better.
-
+To predict the test set and the results are:
+```{r,echo=FALSE}
+predict(mdlgbm,pmlTest)
+```
 
 
